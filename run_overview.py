@@ -156,7 +156,7 @@ def convert_to_local_coords(lat, lon):
     y = (lat_rad - lat_ref_rad)*R
     return x, y
 
-def kalman_filter(xPos, yPos, ax, ay, fs=100, accel_noise=1, gps_noise=2.5, speed_thresh=0.05):
+def kalman_filter(xPos, yPos, ax, ay, fs=100, accel_noise=1.0, gps_noise=2.5, speed_thresh=0.05):
     N = len(xPos)
     X_k = np.array([xPos[0], yPos[0], 0.0, 0.0])
     P_k = np.eye(4)
@@ -255,6 +255,8 @@ tweak_container = st.container()
 default_stationary_thresh = 0.05
 default_fc_axay = 2.2
 default_filter_mode = 'high'
+default_accel_noise = 1.0
+default_gps_noise = 2.5
 
 with tweak_container.expander("Advanced Tweak Options", expanded=False):
     stationary_thresh = st.slider(
@@ -269,6 +271,14 @@ with tweak_container.expander("Advanced Tweak Options", expanded=False):
         "AX/AY Filter Type",
         ["high", "low"],
         index=0 if default_filter_mode=="high" else 1
+    )
+    accel_noise_param = st.slider(
+        "Accel Noise",
+        min_value=0.0, max_value=10.0, value=default_accel_noise, step=0.1
+    )
+    gps_noise_param = st.slider(
+        "GPS Noise",
+        min_value=0.0, max_value=10.0, value=default_gps_noise, step=0.1
     )
 
 st.write("")  # Just some spacing
@@ -294,8 +304,8 @@ xF,yF,spd_kmh, spd_smooth = kalman_filter(
     xPos,yPos,
     ax_filtered,ay_filtered,
     fs=Fs,
-    accel_noise=1,
-    gps_noise=2.5,
+    accel_noise=accel_noise_param,
+    gps_noise=gps_noise_param,
     speed_thresh=stationary_thresh
 )
 dist_kf = np.sqrt(np.diff(xF, prepend=xF[0])**2 + np.diff(yF, prepend=yF[0])**2)
@@ -664,4 +674,3 @@ def render_license_header():
     """, unsafe_allow_html=True)
 
 render_license_header()
-# thx
